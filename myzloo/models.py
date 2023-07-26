@@ -1,9 +1,10 @@
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, PermissionsMixin
 from django.utils import timezone
-from django.db import models
 from mutagen.mp3 import MP3
 from mutagen.flac import FLAC
 from mutagen.oggvorbis import OggVorbis
+from django.contrib.auth import get_user_model
+from django.db import models
 
 class MusicTrack(models.Model):
     title = models.CharField(max_length=200)
@@ -17,7 +18,6 @@ class MusicTrack(models.Model):
 
     def __str__(self):
         return self.title
-
 
     def save(self, *args, **kwargs):
         audio_path = self.audio_file.path
@@ -73,6 +73,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     date_joined = models.DateTimeField(default=timezone.now)
+    favorites = models.ManyToManyField(MusicTrack, related_name='favorited_by')
 
     objects = CustomUserManager()
 
@@ -81,3 +82,10 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+class myzloo_favorites(models.Model):
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, related_name='favorite_tracks')
+    track = models.ForeignKey(MusicTrack, on_delete=models.CASCADE)
+
+    class Meta:
+        unique_together = ('user', 'track')
